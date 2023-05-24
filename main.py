@@ -2,8 +2,7 @@ import glcm_main
 from multiprocessing import Process
 
 if __name__ == '__main__':
-    file = r"C:\Users\马骏涛\Desktop\毕业论文\实验图片\\"
-    # file = input("请输入目标文件地址：")
+    file = input("请输入目标文件地址：")
 
     pic_show = []
     for i in range(4):
