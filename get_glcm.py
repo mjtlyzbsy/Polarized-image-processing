@@ -109,10 +109,11 @@ def calcu_glcm_correlation(glcm, nbit=64):
     for i in range(nbit):
         for j in range(nbit):
             variance += glcm[i, j] * (i - mean)**2
-    
+
     correlation = np.zeros((glcm.shape[2], glcm.shape[3]), dtype=np.float32)
+    variance[np.where(variance == 0.0)] = 0.001#防止除以0的情况
     for i in range(nbit):
         for j in range(nbit):
-            correlation += ((i - mean) * (j - mean) * (glcm[i, j]**2))/variance
+            correlation += np.float32((i - mean) * (j - mean) * (glcm[i, j]**2)) / variance
 
     return correlation
