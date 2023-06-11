@@ -33,6 +33,7 @@ def calcu_glcm(img, vmin=0, vmax=255, nbit=64, slide_window=5, step=[2], angle=[
     # Calculate GLCM (5, 5, 512, 512) --> (64, 64, 512, 512)
     # greycomatrix(image, distances, angles, levels=None, symmetric=False, normed=False)
     glcm = np.zeros((nbit, nbit, len(step), len(angle), h, w), dtype=np.uint8)
+    p = np.zeros((nbit, nbit, len(step), 1, h, w), dtype=np.float64)
     for i in range(patch.shape[2]):
         for j in range(patch.shape[3]):
             glcm[:, :, :, :, i, j]= graycomatrix(patch[:, :, i, j], step, angle, levels=nbit)
@@ -44,31 +45,13 @@ def calcu_glcm(img, vmin=0, vmax=255, nbit=64, slide_window=5, step=[2], angle=[
             # symmetric：一个布尔值，指定是否考虑对称灰度对。如果为True，则在计算灰度共生矩阵时，考虑i和j之间的对称关系。默认为False。
             # normed：一个布尔值，指定是否对灰度共生矩阵进行标准化。如果为True，则对灰度共生矩阵进行标准化处理。默认为False。
             # 返回值： P[i,j,d,theta] 是灰度 j 在距离 d 处和与灰度 i 成角度 theta 处出现的次数
-    return glcm
-
-def calcu_glcm_mean(glcm, nbit=64):
-# GLCM的均值特征
-
-    mean = np.zeros((glcm.shape[2], glcm.shape[3]), dtype=np.float32)
-    for i in range(nbit):
-        for j in range(nbit):
-            mean += glcm[i,j] * i / (nbit)**2
-
-    return mean
-
-def calcu_glcm_variance(glcm, nbit=64):
-# GLCM的方差特征
-    mean = np.zeros((glcm.shape[2], glcm.shape[3]), dtype=np.float32)
-    for i in range(nbit):
-        for j in range(nbit):
-            mean += glcm[i, j] * i / (nbit)**2
-
-    variance = np.zeros((glcm.shape[2], glcm.shape[3]), dtype=np.float32)
-    for i in range(nbit):
-        for j in range(nbit):
-            variance += glcm[i, j] * (i - mean)**2
-
-    return variance
+            for k in range(nbit):
+                for l in range(nbit):
+                    for h in range(len(step)):
+                        p[k, l, h, 0, i, j] = np.sum(glcm[k, l, h, :, i, j])/4
+            for h in range(len(step)):
+                p[:, :, h, 0, i, j] /= np.sum(p[:, :, h, 0, i, j])
+    return p
 
 def calcu_glcm_contrast(glcm, nbit=64):
 # GLCM的对比度特征
@@ -100,6 +83,7 @@ def calcu_glcm_energy(glcm, nbit=64):
 
 def calcu_glcm_correlation(glcm, nbit=64):
 # GLCM的相关性特征
+    eps = 1e-5
     mean = np.zeros((glcm.shape[2], glcm.shape[3]), dtype=np.float32)
     for i in range(nbit):
         for j in range(nbit):
@@ -114,6 +98,6 @@ def calcu_glcm_correlation(glcm, nbit=64):
     variance[np.where(variance == 0.0)] = 0.001#防止除以0的情况
     for i in range(nbit):
         for j in range(nbit):
-            correlation += np.float32((i - mean) * (j - mean) * (glcm[i, j]**2)) / variance
+            correlation += np.float32((i - mean) * (j - mean) * (glcm[i, j]**2)) / (variance + eps)
 
     return correlation
